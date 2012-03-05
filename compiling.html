@@ -1,0 +1,168 @@
+<!doctype html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compiling for Rigel</title>
+  <meta name="description" content="">
+  <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="static/js/prettify.js"></script>
+
+  <!-- google analytics -->
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29490885-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+  <!-- end google analytics -->
+
+</head>
+
+<body onload="prettyPrint()">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand" href="/index.html">Rigel</a>
+        <ul class="nav">
+          <li><a href="/gettingstarted.html">Getting Started</a></li>
+          <li><a href="/compiling.html">Compiling for Rigel</a></li>
+          <li><a href="/coding.html">Writing Code for Rigel</a></li>
+          <li><a href="/machine.html">Machine Description</a></li>
+          <li><a href="/motivation.html">Motivation</a></li>
+          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div><!-- /navbar-inner -->
+  </div><!-- /navbar -->
+
+<div class="container">
+  <div class="page-header">
+    <h1>Compiling Code For Rigel</h1>
+  </div>
+
+<h2>Glossary</h2>
+<ul>
+  <li><strong>Host</strong>: The machine running the Rigel simulator or compiler toolchain</li>
+  <li><strong>Target</strong>: The simulated Rigel system itself</li>
+</ul>
+
+<h2>Toolchain</h2>
+<p>The Rigel compilation toolchain is based on Clang 2.8, LLVM 2.8, and GNU Binutils 2.18.</p>
+
+<p>The sequence of tools used to compile a C program to an executable binary is shown in the figure below.</p>
+
+<p align="center">
+<!-- We have an SVG version, but it doesn't deal well with rounded corners from PPT slides -->
+<!--<object data="static/img/fig/rigel_compilation_flow.svg" type="image/svg+xml">-->
+  <img src="static/img/fig/rigel_compilation_flow.png" alt="Rigel Compilation Toolchain" height="232" width="960"/>
+<!--</object>-->
+</p>
+
+<p>The <tt>clang</tt> binary is used as a <em>compiler driver</em>; that is, it automatically invokes a sequence of other
+tools for parsing, compiling, optimizing, assembling, and linking.
+<p><tt>clang</tt> is used as a cross-compiler by passing the argument <tt>-ccc-host-triple rigel-unknown-unknown</tt>.
+<p>For the <tt>rigel-unknown-unknown</tt> target, <tt>clang</tt> will call out to GNU <tt>as</tt> and GNU <tt>ld</tt>
+(with binaries named <tt>rigelas</tt> and <tt>rigelld</tt> to distinguish them from the system versions) for assembly and linking.
+
+<p><tt>clang</tt> itself performs source preprocessing, parsing, and semantic analysis, and lowers the generated AST to
+LLVM's <a href="http://llvm.org/docs/LangRef.html">SSA-based IR</a>.
+<p>You can tell <tt>clang</tt> to only preprocess a file by passing <tt>-E</tt>, or only preprocess, parse, and analyze by passing <tt>-fsyntax-only</tt>.
+<p>Like other compiler drivers, <tt>clang</tt> can compile to an object file with <tt>-c</tt>, or emit assembly code with <tt>-S</tt>.
+<p><tt>clang</tt> can also emit bitcode or textual versions of the LLVM IR by passing <tt>-c -emit-llvm</tt> or <tt>-S -emit-llvm</tt> respectively. 
+<p>To emit completely unoptimized IR, use something like <tt>clang -S -emit-llvm -mllvm -disable-llvm-optzns foo.c -o foo.ll</tt>.
+<p>For other flags, see the <a href="http://clang.llvm.org/docs/UsersManual.html">User Manual</a>, keeping in mind that we are using
+  version 2.8 and may not support some features listed.
+
+<h3>File Extensions</h3>
+<ul>
+  <li>Rigel object code files have the extension <tt>.ro</tt> as opposed to the usual <tt>.o</tt> to avoid confusion with host object files.</li>
+  <li>Static libraries have the usual extension, <tt>.a</tt>.</li>
+  <li>When dynamic linking support is added, shared libraries will have the usual extension, <tt>.so</tt>.</li>
+  <li>Due to a historical artifact, our convention is to give target executables the extension <tt>.tasks</tt>.</li>
+</ul>
+
+<h3>Example</h3>
+<p><tt>$RIGEL_TARGETCODE/src/Makefile.common</tt> has a set of flags that mostly automate the process of compiling C code for Rigel.
+<tt>$RIGEL_TARGETCODE/src/benchmarks</tt> and <tt>$RIGEL_TARGETCODE/src/testing</tt> have additional <tt>Makefile</tt> scaffolding that
+minimize the amount of boilerplate required for individual benchmarks or test codes.  For example, here we compile and run the
+<tt>complex</tt> test code.
+
+<pre class="prettyprint lang-c">
+mrj10@mjlap:~/rigel$ cd $RIGEL_TARGETCODE/src/testing/complex
+mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ cat Makefile 
+BENCHMARK_NAME = complex
+SOURCES_C = complex.c
+
+EXTRA_CFLAGS =
+EXTRA_LDFLAGS = -lm
+
+include ../Makefile.common
+mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ cat complex.c
+//conversion of a real number from its Cartesian to polar form
+
+#include &lt;stdio.h&gt;
+#include &lt;complex.h&gt;
+#include "rigel.h"
+
+int main(){
+        if(RigelGetThreadNum() == 0) {
+                SIM_SLEEP_OFF();
+    double complex z = -4.4 + 3.3 * I;
+    double radius = cabs(z);
+    double argument = carg(z);
+
+    double x = creal(z);
+    double y = cimag(z);
+
+    printf("cartesian(x,y):(%4.1f,%4.1f)\n",x,y);
+    printf("polar(r,theta):(%4.1f,%4.1f)\n",radius,argument);
+        }
+  return 0;
+}
+mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ make
+/home/mrj10/rigel/install/host/bin/clang -ccc-host-triple rigel-unknown-unknown  -Qunused-arguments -nostdinc -I/home/mrj10/rigel/install/host/lib/clang/2.8/include -I. -I/home/mrj10/rigel/install/target/include -I/home/mrj10/rigel/sim/rigel-sim//includes -DLLVM28 -DRIGEL -O3 -ffast-math -fomit-frame-pointer  -D"CLUSTER_LOCAL_TQ" -DINNER_LOOP_C      -Wall -c complex.c -o complex.ro
+
+/home/mrj10/rigel/install/host/bin/clang -ccc-host-triple rigel-unknown-unknown  -Qunused-arguments -nostdinc -I/home/mrj10/rigel/install/host/lib/clang/2.8/include -I. -I/home/mrj10/rigel/install/target/include -I/home/mrj10/rigel/sim/rigel-sim//includes -DLLVM28 -DRIGEL -O3 -ffast-math -fomit-frame-pointer  -D"CLUSTER_LOCAL_TQ" -DINNER_LOOP_C      -Wall complex.ro   -Xlinker "--oformat=elf32-bigmips" -Xlinker "-T/home/mrj10/rigel/install/target/lib/linker/rigel.ld"  -static -lm -lpar -lm -o complex.tasks
+
+/home/mrj10/rigel/install/host/bin/rigelobjdump -d -mmipsrigel32 complex.tasks >complex.obj
+rm complex.ro
+mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ $RIGEL_INSTALL/host/bin/rigelsim complex.tasks
+RigelSim Compiled by mrj10 on Feb 26 2012 at 15:10:55 from Git commit:
+commit bd236f7fb1544758e436ba5c810b644184e4aa25
+...
+...
+cartesian(x,y):(-4.4, 3.3)
+polar(r,theta):( 5.5, 2.5)
+core 0 (local 0) thread 0 halting @ cycle 93708, PC 0x00000068
+Simulation exiting.  Reason: System-wide halt
+</pre>
+
+<h3>Under the Hood</h3>
+<p><tt>clang</tt> has a couple useful options to debug interactions between the components of the compilation flow.
+<ul>
+  <li><tt>-v</tt> toggles verbose mode, which prints all subtool invocations to the screen so you can verify their correctness
+or try them yourself.</li>
+  <li><tt>-save-temps</tt> saves the temporary <tt>.i</tt>, <tt>.s</tt>, and <tt>.ro</tt> files it creates en route to a
+    <tt>.tasks</tt> binary.</li>
+</ul>
+
+<footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
+</div>
+
+</body>
+</html>

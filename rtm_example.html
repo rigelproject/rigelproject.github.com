@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>rtm_example.c</title>
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
+
+  <!-- google analytics -->
+  <script type="text/javascript">
+  
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29490885-1']);
+    _gaq.push(['_trackPageview']);
+  
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  
+  </script>
+  <!-- end google analytics -->
+
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>rtm_example.c</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>This file implements a parallel version of <a href="http://en.wikipedia.org/wiki/Conway's_Game_of_Life">Conway&rsquo;s Game of Life</a>.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>It demonstrates the structure of a MIMD task-parallel program written for the <a href="https://rigel.crhc.illinois.edu/">Rigel</a>
+architecture using the Rigel Task Model, a <a href="http://en.wikipedia.org/wiki/Bulk_synchronous_parallel">Bulk-Synchronous Parallel</a>
+programming model implemented by a concurrent, hierarchical task queue.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>It also demonstrates several useful idioms that take advantage of Rigel- and RigelSim-specific features.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Includes'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Includes">&#182;</a>
+        </div>
+        <h1>Includes</h1>
+
+<p>For <code>fprintf</code></p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &lt;stdio.h&gt;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>For <code>malloc</code>, <code>strtoul</code>, etc.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &lt;stdlib.h&gt;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>For <code>bool</code> (C99)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &lt;stdbool.h&gt;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>For Rigel-specific syscalls, inline ASM, and typedefs</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;rigel.h&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>For RTM typedefs and function declarations</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;rigel-tasks.h&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>For convenience RTM-related macro definitions like <code>RIGEL_LOOP</code></p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;../../benchmarks/common/common.h&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>For <code>ALIGNED_MALLOC</code></p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;../../benchmarks/common/macros.h&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Front_Matter'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Front_Matter">&#182;</a>
+        </div>
+        <h1>Front Matter</h1>
+
+<h2>Global Data</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Turn this on and off to enable/disable printouts of the Game of Life board every iteration</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#define DEBUG</span>
+<span class="cp">#undef DEBUG</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>This macro declares a global variable called <code>flag</code>
+that will be initialized to &lsquo;0&rsquo; (clear).  All threads
+except 0 will spin on this flag, and thread 0 will
+set the flag to 1 when it has completed initialization,
+and all threads will enter the parallel section.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">ATOMICFLAG_INIT_CLEAR</span><span class="p">(</span><span class="n">flag</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>RTM allows for multiple task queues to coexist, and you supply
+an argument to many RTM function calls specifying the queue ID.
+in this case, hardcode that argument to 0.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">const</span> <span class="kt">int</span> <span class="n">QID</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Global variables are unfortunately (from a software enginering perspective)
+the easiest way to make values writable from thread 0 during initialization
+and readable from all other threads afterwards.
+As you&rsquo;ll see later, you need to be careful about managing the L1 and L2 cache
+values of these global variables once thread 0 is done writing them and wants
+to make them globally visible.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>These two variables store the number of rows and columns in our Game of Life grid. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">int</span> <span class="n">R</span><span class="p">,</span> <span class="n">C</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>These two variables define the size of the block of <strong>output</strong> cells handled by each task.
+This could easily be set dynamically.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">int</span> <span class="n">BLOCK_SIZE_R</span><span class="p">,</span> <span class="n">BLOCK_SIZE_C</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Number of iterations of Game of Life</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">int</span> <span class="n">NUM_ITERATIONS</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Two arrays for doing out-of-place iterations</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Could be bitvectors, but this makes the indexing easier and allows you to store
+additional per-cell info (like object number)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">typedef</span> <span class="kt">int</span> <span class="n">gol_cell_t</span><span class="p">;</span>
+<span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">WORLD_IN</span><span class="p">,</span> <span class="o">*</span><span class="n">WORLD_OUT</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>Define a helper macro for indexing into a 2D packed array.
+The <code>+2</code> is due to the 0-padding on the edges</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#define IDX(i, j) ((j)+((i)*(C+2)))</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Task-Centric_Memory_Model_Handling'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Task-Centric_Memory_Model_Handling">&#182;</a>
+        </div>
+        <h2>Task-Centric Memory Model Handling</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>The mechanics of using the task-centric memory model without compiler or runtime support
+are a bit complex, but we have some helpers to make things easier.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>Bools that tell us what TCMM policy we&rsquo;re using.  Only one
+<code>TCMM_INV_*</code> and one <code>TCMM_WRB_*</code> should be set to 1 at a time.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">int</span> <span class="n">TCMM_INV_LAZY</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">TCMM_INV_EAGER</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">TCMM_WRB_LAZY</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">TCMM_WRB_EAGER</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">get_task_parameters</span><span class="p">(</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="n">td</span><span class="p">,</span> <span class="n">gol_cell_t</span> <span class="o">**</span><span class="n">in</span><span class="p">,</span> <span class="n">gol_cell_t</span> <span class="o">**</span><span class="n">out</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">rmin</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">rmax</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">cmin</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">cmax</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>Extract the <code>in</code> and <code>out</code> pointers from <code>v1</code> and <code>v2</code> in the task descriptor.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="o">*</span><span class="n">in</span> <span class="o">=</span> <span class="p">(</span><span class="n">gol_cell_t</span> <span class="o">*</span><span class="p">)(</span><span class="n">td</span><span class="o">-&gt;</span><span class="n">v1</span><span class="p">.</span><span class="n">v1</span><span class="p">);</span>
+  <span class="o">*</span><span class="n">out</span> <span class="o">=</span> <span class="p">(</span><span class="n">gol_cell_t</span> <span class="o">*</span><span class="p">)(</span><span class="n">td</span><span class="o">-&gt;</span><span class="n">v2</span><span class="p">.</span><span class="n">v2</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-26'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-26">&#182;</a>
+        </div>
+        <p>The cells within <code>in</code> and <code>out</code> touched by the task
+are uniquely identified by its <code>v3</code> due to the &lsquo;1&rsquo; argument
+we pass to <code>RIGEL_LOOP()</code> below.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">const</span> <span class="kt">int</span> <span class="n">tasknum</span> <span class="o">=</span> <span class="n">td</span><span class="o">-&gt;</span><span class="n">v3</span><span class="p">.</span><span class="n">v3</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">int</span> <span class="n">tasks_per_row</span> <span class="o">=</span> <span class="n">C</span> <span class="o">/</span> <span class="n">BLOCK_SIZE_C</span><span class="p">;</span>
+  <span class="o">*</span><span class="n">rmin</span> <span class="o">=</span> <span class="p">((</span><span class="n">tasknum</span> <span class="o">/</span> <span class="n">tasks_per_row</span><span class="p">)</span> <span class="o">*</span> <span class="n">BLOCK_SIZE_R</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//`+ 1` due to 0-padding</span>
+  <span class="o">*</span><span class="n">rmax</span> <span class="o">=</span> <span class="o">*</span><span class="n">rmin</span> <span class="o">+</span> <span class="n">BLOCK_SIZE_R</span><span class="p">;</span>
+  <span class="o">*</span><span class="n">cmin</span> <span class="o">=</span> <span class="p">((</span><span class="n">tasknum</span> <span class="o">%</span> <span class="n">tasks_per_row</span><span class="p">)</span> <span class="o">*</span> <span class="n">BLOCK_SIZE_C</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">//`+ 1` due to 0-padding</span>
+  <span class="o">*</span><span class="n">cmax</span> <span class="o">=</span> <span class="o">*</span><span class="n">cmin</span> <span class="o">+</span> <span class="n">BLOCK_SIZE_C</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-27'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-27">&#182;</a>
+        </div>
+        <p>descriptor_buffer_fancy.h implements a circular queue of task descriptors.
+The descriptor buffer will automatically process task descriptors as it fills up, and will
+process all task descriptors when you tell it to at the end of an interval.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;../../benchmarks/common/descriptor_buffer_fancy.h&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-28'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-28">&#182;</a>
+        </div>
+        <p>We need to writeback all the values we wrote into the <code>out</code>
+array during a task, so that tasks next interval will
+read the new values</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">writeback_descriptor</span><span class="p">(</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="n">td</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">in</span><span class="p">,</span> <span class="o">*</span><span class="n">out</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">rmin</span><span class="p">,</span> <span class="n">rmax</span><span class="p">,</span> <span class="n">cmin</span><span class="p">,</span> <span class="n">cmax</span><span class="p">;</span>
+  <span class="n">get_task_parameters</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmax</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmax</span><span class="p">);</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rmin</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rmax</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="n">cmin</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">cmax</span><span class="p">;</span> <span class="n">j</span> <span class="o">+=</span> <span class="p">(</span><span class="n">__CACHE_LINE_SIZE_BYTES</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">gol_cell_t</span><span class="p">)))</span>
+      <span class="n">RigelWritebackLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">out</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-29'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-29">&#182;</a>
+        </div>
+        <p>We need to invalidate all the input values we read during
+a task, so that next time we can read updated values that
+may have been written by another thread.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">invalidate_descriptor</span><span class="p">(</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="n">td</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">in</span><span class="p">,</span> <span class="o">*</span><span class="n">out</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">rmin</span><span class="p">,</span> <span class="n">rmax</span><span class="p">,</span> <span class="n">cmin</span><span class="p">,</span> <span class="n">cmax</span><span class="p">;</span>
+  <span class="n">get_task_parameters</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmax</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmax</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-30'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-30">&#182;</a>
+        </div>
+        <p>The input area we read goes from (rmin-1, cmin-1) to (rmax+1, cmax+1)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rmin</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rmax</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="n">cmin</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">cmax</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">+=</span> <span class="p">(</span><span class="n">__CACHE_LINE_SIZE_BYTES</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">gol_cell_t</span><span class="p">)))</span>
+      <span class="n">RigelInvalidateLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Task_Code'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Task_Code">&#182;</a>
+        </div>
+        <h1>Task Code</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-32'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-32">&#182;</a>
+        </div>
+        <p>Simulate one iteration of the Game of Life for a rectangular block of cells.
+The rules are:</p>
+
+<ul>
+<li>If a cell is live and has less than 2 live neighbors, it dies due to loneliness.</li>
+<li>If a cell is live and has more than 3 live neighbors, it dies due to overcrowding.</li>
+<li>If a cell is live and has 2 or 3 live neighbors, it lives.</li>
+<li>If a cell is dead, it stays dead unless it has <strong>exactly</strong> 3 live neighbors.</li>
+</ul>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="nf">GOLTask</span><span class="p">(</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="n">td</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">in</span><span class="p">,</span> <span class="o">*</span><span class="n">out</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">rmin</span><span class="p">,</span> <span class="n">rmax</span><span class="p">,</span> <span class="n">cmin</span><span class="p">,</span> <span class="n">cmax</span><span class="p">;</span>
+  <span class="n">get_task_parameters</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rmax</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmax</span><span class="p">);</span>
+
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rmin</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rmax</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="n">cmin</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">cmax</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">bool</span> <span class="n">live</span> <span class="o">=</span> <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+      <span class="kt">int</span> <span class="n">numLiveNeighbors</span> <span class="o">=</span> <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span>
+                             <span class="p">(</span><span class="n">in</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+      <span class="k">if</span><span class="p">((</span><span class="n">live</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">numLiveNeighbors</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">||</span> <span class="n">numLiveNeighbors</span> <span class="o">==</span> <span class="mi">3</span><span class="p">))</span> <span class="o">||</span> <span class="p">(</span><span class="o">!</span><span class="n">live</span> <span class="o">&amp;&amp;</span> <span class="n">numLiveNeighbors</span> <span class="o">==</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="k">else</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Worker_Thread'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Worker_Thread">&#182;</a>
+        </div>
+        <h1>Worker Thread</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-34'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-34">&#182;</a>
+        </div>
+        <p>Every thread runs this function after thread 0 completes initialization.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="nf">GOLWorkerThread</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">TQ_TaskDesc</span> <span class="n">tdesc</span><span class="p">;</span>
+  <span class="n">TQ_RetType</span> <span class="n">ret</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-35'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-35">&#182;</a>
+        </div>
+        <p>Local <code>WORLD_IN</code>/<code>WORLD_OUT</code> pointers we can swap between iterations</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">in</span> <span class="o">=</span> <span class="n">WORLD_IN</span><span class="p">,</span> <span class="o">*</span><span class="n">out</span> <span class="o">=</span> <span class="n">WORLD_OUT</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-36'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-36">&#182;</a>
+        </div>
+        <p>Handle task descriptors for lazy writeback</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">descriptor_buffer</span> <span class="n">db</span><span class="p">;</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">dbflags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-37'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-37">&#182;</a>
+        </div>
+        <p>Initialize flags for descriptor buffer</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span><span class="p">(</span><span class="n">TCMM_WRB_LAZY</span><span class="p">)</span>
+    <span class="n">dbflags</span> <span class="o">|=</span> <span class="n">DESCRIPTOR_BUFFER_HANDLES_WRITEBACK</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">TCMM_INV_LAZY</span><span class="p">)</span>
+    <span class="n">dbflags</span> <span class="o">|=</span> <span class="n">DESCRIPTOR_BUFFER_HANDLES_INVALIDATE</span><span class="p">;</span>
+  <span class="n">init_descriptor_buffer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">db</span><span class="p">,</span> <span class="n">dbflags</span><span class="p">,</span> <span class="n">writeback_descriptor</span><span class="p">,</span> <span class="n">invalidate_descriptor</span><span class="p">);</span>
+
+
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">NUM_ITERATIONS</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-38'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-38">&#182;</a>
+        </div>
+        <p><code>RIGEL_LOOP()</code> is a helper function that enqueues a bunch of tasks in parallel across
+the entire chip.  It only works correctly when all threads call it, so if that
+doesn&rsquo;t hold in your use case, use <code>SW_TaskQueue_Enqueue()</code> instead.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-39'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-39">&#182;</a>
+        </div>
+        <p><code>RIGEL_LOOP()</code> enqueues a &ldquo;one-dimensional&rdquo; block of tasks with identical <code>v1</code> and <code>v2</code>
+and varying <code>v3</code> and <code>v4</code>.  We pass in a task descriptor where we can set <code>v1</code> and <code>v2</code>
+arbitrarily; these values will be propagated to all enqueued tasks.
+In this case, it&rsquo;s helpful to encode the current <code>in</code> and <code>out</code> pointers in the task
+descriptor to let the descriptor buffer know what data to flush.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">TQ_TaskDesc</span> <span class="n">td</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-40'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-40">&#182;</a>
+        </div>
+        <p>FIXME Make this process TBAA-clean by defining a <code>union</code> of <code>gol_cell_t</code> and <code>unsigned int</code></p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">td</span><span class="p">.</span><span class="n">v1</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span><span class="n">in</span><span class="p">;</span>
+    <span class="n">td</span><span class="p">.</span><span class="n">v2</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)</span><span class="n">out</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-41'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-41">&#182;</a>
+        </div>
+        <p><code>RIGEL_LOOP()</code> could fail, for example, if the task queue overflows.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">if</span><span class="p">((</span><span class="n">ret</span> <span class="o">=</span> <span class="n">RIGEL_LOOP</span><span class="p">(</span><span class="n">QID</span><span class="p">,</span> <span class="p">(</span><span class="n">R</span><span class="o">*</span><span class="n">C</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">BLOCK_SIZE_R</span><span class="o">*</span><span class="n">BLOCK_SIZE_C</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">td</span><span class="p">))</span> <span class="o">!=</span> <span class="n">TQ_RET_SUCCESS</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Iteration %d, enqueue returned %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-42'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-42">&#182;</a>
+        </div>
+        <p>This call lowers to an <code>abort</code> instruction, which immediately halts the simulation.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">RigelAbort</span><span class="p">();</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-43'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-43">&#182;</a>
+        </div>
+        <p>Dequeue and execute tasks </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">ret</span> <span class="o">=</span> <span class="n">RIGEL_DEQUEUE</span><span class="p">(</span><span class="n">QID</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tdesc</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-44'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-44">&#182;</a>
+        </div>
+        <p>Task queue is empty for now, try again</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="n">TQ_RET_BLOCK</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-45'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-45">&#182;</a>
+        </div>
+        <p>Task queue is empty and we reached a barrier, go to the next interval</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="n">TQ_RET_SYNC</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-46'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-46">&#182;</a>
+        </div>
+        <p>Failure</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="n">TQ_RET_SUCCESS</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Iteration %d, dequeue returned %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+        <span class="n">RigelAbort</span><span class="p">();</span>
+      <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-47'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-47">&#182;</a>
+        </div>
+        <p>Dispatch the task</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-48'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-48">&#182;</a>
+        </div>
+        <p>We have 128 bits of state to play with; for more complicated
+code with many task types in a single interval, v1 could be a function pointer,
+or an index into a table of task function pointers.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">GOLTask</span><span class="p">((</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">tdesc</span><span class="p">));</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">TCMM_WRB_EAGER</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">writeback_descriptor</span><span class="p">((</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">tdesc</span><span class="p">));</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">TCMM_INV_EAGER</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">invalidate_descriptor</span><span class="p">((</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">tdesc</span><span class="p">));</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">TCMM_WRB_LAZY</span> <span class="o">||</span> <span class="n">TCMM_INV_LAZY</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">add_descriptor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">db</span><span class="p">,</span> <span class="p">(</span><span class="n">rtm_range_t</span> <span class="o">*</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">tdesc</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-49'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-49">&#182;</a>
+        </div>
+        <p>End of interval</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">if</span> <span class="p">(</span><span class="n">TCMM_WRB_LAZY</span> <span class="o">||</span> <span class="n">TCMM_INV_LAZY</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">empty_all_descriptors</span><span class="p">(</span><span class="o">&amp;</span><span class="n">db</span><span class="p">);</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-50'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-50">&#182;</a>
+        </div>
+        <p>Print board if DEBUG is defined</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#ifdef DEBUG</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">RigelGetThreadNum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">fprintf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="s">&quot;%01d&quot;</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]);</span>
+        <span class="p">}</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="n">fprintf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span><span class="s">&quot;----------------</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="cp">#endif</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-51'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-51">&#182;</a>
+        </div>
+        <p>Swap in and out pointers</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">gol_cell_t</span> <span class="o">*</span> <span class="k">const</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">in</span><span class="p">;</span> <span class="n">in</span> <span class="o">=</span> <span class="n">out</span><span class="p">;</span> <span class="n">out</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+  <span class="p">}</span> <span class="c1">//End of all intervals</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Main'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Main">&#182;</a>
+        </div>
+        <h1>Main</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-53'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-53">&#182;</a>
+        </div>
+        <p>All threads will start here once they&rsquo;ve finished <code>libc</code> initialization.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span><span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-54'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-54">&#182;</a>
+        </div>
+        <p>Get this thread&rsquo;s global ID (between 0 and <code>RigelGetNumThreads()</code>).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">int</span> <span class="kr">thread</span> <span class="o">=</span> <span class="n">RigelGetThreadNum</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-55'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-55">&#182;</a>
+        </div>
+        <p>These will be stack-allocated in all threads, but will only be used by thread 0 to free
+<code>WORLD_IN</code> and <code>WORLD_OUT</code> at the end.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">world_in_unaligned</span><span class="p">,</span> <span class="o">*</span><span class="n">world_out_unaligned</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Initialization'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Initialization">&#182;</a>
+        </div>
+        <h1>Initialization</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span><span class="p">(</span><span class="kr">thread</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-57'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-57">&#182;</a>
+        </div>
+        <p>Put all other threads to sleep so we don&rsquo;t simulate their spin-waiting and save time.
+This is purely a simulation time optimization, it is not necessary and does not impact
+program semantics.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">SIM_SLEEP_ON</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Argument_Parsing'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Argument_Parsing">&#182;</a>
+        </div>
+        <h2>Argument Parsing</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">assert</span><span class="p">((</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">7</span> <span class="o">||</span> <span class="n">argc</span> <span class="o">==</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;game_of_life TCMM_STRATEGY R C BLOCK_SIZE_R BLOCK_SIZE_C ITERATIONS [RANDOM_SEED]&quot;</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">tcmm_strategy</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="k">switch</span><span class="p">(</span><span class="n">tcmm_strategy</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-59'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-59">&#182;</a>
+        </div>
+        <p>Lazy Invalidate, Lazy Writeback (LILW) </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">case</span> <span class="mi">0</span>: <span class="n">TCMM_INV_LAZY</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">TCMM_WRB_LAZY</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-60'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-60">&#182;</a>
+        </div>
+        <p>Lazy Invalidate, Eager Writeback (LIEW)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">case</span> <span class="mi">1</span>: <span class="n">TCMM_INV_LAZY</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">TCMM_WRB_EAGER</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-61'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-61">&#182;</a>
+        </div>
+        <p>Eager Invalidate, Lazy Writeback (EILW)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">case</span> <span class="mi">2</span>: <span class="n">TCMM_INV_EAGER</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">TCMM_WRB_LAZY</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-62'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-62">&#182;</a>
+        </div>
+        <p>Eager Invalidate, Eager Writeback (EIEW)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">case</span> <span class="mi">3</span>: <span class="n">TCMM_INV_EAGER</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">TCMM_WRB_EAGER</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-63'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-63">&#182;</a>
+        </div>
+        <p>No software coherence actions performed, simulates ideal hardware coherence.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">case</span> <span class="mi">4</span>: <span class="k">break</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-64'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-64">&#182;</a>
+        </div>
+        <p>Not allowed</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="nl">default:</span> <span class="n">assert</span><span class="p">(</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;TCMM_STRATEGY not in 0-4&quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">R</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="n">BLOCK_SIZE_R</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="n">BLOCK_SIZE_C</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-65'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-65">&#182;</a>
+        </div>
+        <p>For simplicity, make sure R and C are evenly divisible by the block size to avoid edge case code.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">assert</span><span class="p">(((</span><span class="n">R</span> <span class="o">%</span> <span class="n">BLOCK_SIZE_R</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;R must be evenly divisible by BLOCK_SIZE_R&quot;</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(((</span><span class="n">C</span> <span class="o">%</span> <span class="n">BLOCK_SIZE_C</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;C must be evenly divisible by BLOCK_SIZE_C&quot;</span><span class="p">);</span>
+
+    <span class="n">NUM_ITERATIONS</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">int</span> <span class="n">seed</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">strtol</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-66'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-66">&#182;</a>
+        </div>
+        <p>Seed the simulator&rsquo;s RNG with these 32 bits of state replicated twice.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">RigelSRand</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">seed</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="c1">//Seed with 0</span>
+      <span class="n">RigelSRand</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-RTM_Structures'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-RTM_Structures">&#182;</a>
+        </div>
+        <h2>RTM Structures</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-68'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-68">&#182;</a>
+        </div>
+        <p>Initialize task queue</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">RIGEL_INIT</span><span class="p">(</span><span class="n">QID</span><span class="p">,</span> <span class="n">MAX_TASKS</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-69'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-69">&#182;</a>
+        </div>
+        <p>Store all tasks in cluster-local task queues rather than pushing to a global task queue.
+This decreases contention and increases performance if task length is uniform, otherwise
+the decreased contention is offset by load imbalance.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">SW_TaskQueue_Set_DATA_PARALLEL_MODE</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Game_of_Life_Data'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Game_of_Life_Data">&#182;</a>
+        </div>
+        <h2>Game of Life Data</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-71'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-71">&#182;</a>
+        </div>
+        <p><code>malloc()</code> <code>WORLD_IN</code> and <code>WORLD_OUT</code> arrays and 2^11-byte-align them.
+The large alignment is for better DRAM row locality.
+Save the unaligned pointers so we can free them later.
+We allocate an (R+2)x(C+2) array to allow for zero-padding around the edges.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">ALIGNED_MALLOC</span><span class="p">((</span><span class="n">R</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">C</span><span class="o">+</span><span class="mi">2</span><span class="p">),</span> <span class="n">gol_cell_t</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="n">world_in_unaligned</span><span class="p">,</span> <span class="n">WORLD_IN</span><span class="p">);</span>
+    <span class="n">ALIGNED_MALLOC</span><span class="p">((</span><span class="n">R</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">C</span><span class="o">+</span><span class="mi">2</span><span class="p">),</span> <span class="n">gol_cell_t</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="n">world_out_unaligned</span><span class="p">,</span> <span class="n">WORLD_OUT</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-72'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-72">&#182;</a>
+        </div>
+        <p>Initialize <code>WORLD_IN</code> randomly.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-73'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-73">&#182;</a>
+        </div>
+        <p>Initialize cell (i+1, j+1) with a random integer between 0 and 1 <strong>generated by the simulator</strong>.
+This lowers to a <code>syscall</code> instruction, which lets the simulator generate a random number for us in 0 cycles.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="n">WORLD_IN</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">RigelRandInt</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-74'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-74">&#182;</a>
+        </div>
+        <p>Zero-initialize edges of <code>WORLD_IN</code> and <code>WORLD_OUT</code>.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-75'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-75">&#182;</a>
+        </div>
+        <p>Left edges</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">WORLD_IN</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">WORLD_OUT</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-76'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-76">&#182;</a>
+        </div>
+        <p>Right edges</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">WORLD_IN</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">C</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">WORLD_OUT</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">C</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">C</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-77'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-77">&#182;</a>
+        </div>
+        <p>Top edges</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">WORLD_IN</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">WORLD_OUT</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-78'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-78">&#182;</a>
+        </div>
+        <p>Bottom edges</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="n">WORLD_IN</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">R</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">WORLD_OUT</span><span class="p">[</span><span class="n">IDX</span><span class="p">(</span><span class="n">R</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-TCMM_Cache_Management'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-TCMM_Cache_Management">&#182;</a>
+        </div>
+        <h2>TCMM Cache Management</h2>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-80'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-80">&#182;</a>
+        </div>
+        <p>Flush (writeback+invalidate in L1/L2) all data touched by thread 0.
+This has two purposes:</p>
+
+<ul>
+<li>In a real Rigel implementation with incoherent L2s, this would be
+required for threads in other clusters to read the written values.</li>
+<li>In a simulation environment, where a program would still work if these
+cache operations were omitted, our performance would be too good because
+cluster 0&rsquo;s caches would start out super-hot.</li>
+</ul>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">R</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">C</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BLOCK_SIZE_R</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">BLOCK_SIZE_C</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">NUM_ITERATIONS</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-81'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-81">&#182;</a>
+        </div>
+        <p>Strictly speaking, we only need to flush the borders of <code>WORLD_OUT</code>,
+but we flush the whole array to make the code easier to read.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">inwalker</span> <span class="o">=</span> <span class="n">WORLD_IN</span><span class="p">,</span> <span class="o">*</span><span class="n">inend</span> <span class="o">=</span> <span class="n">WORLD_IN</span> <span class="o">+</span> <span class="p">((</span><span class="n">R</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">C</span><span class="o">+</span><span class="mi">2</span><span class="p">));</span>
+    <span class="n">gol_cell_t</span> <span class="o">*</span><span class="n">outwalker</span> <span class="o">=</span> <span class="n">WORLD_OUT</span><span class="p">;</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">inwalker</span> <span class="o">&lt;</span> <span class="n">inend</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">RigelFlushLine</span><span class="p">(</span><span class="n">inwalker</span><span class="p">);</span>
+      <span class="n">RigelFlushLine</span><span class="p">(</span><span class="n">outwalker</span><span class="p">);</span>
+      <span class="n">inwalker</span> <span class="o">+=</span> <span class="p">(</span><span class="n">__CACHE_LINE_SIZE_BYTES</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">inwalker</span><span class="p">));</span>
+      <span class="n">outwalker</span> <span class="o">+=</span> <span class="p">(</span><span class="n">__CACHE_LINE_SIZE_BYTES</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">outwalker</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">WORLD_IN</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">WORLD_OUT</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TCMM_INV_LAZY</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TCMM_INV_EAGER</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TCMM_WRB_LAZY</span><span class="p">);</span>
+    <span class="n">RigelFlushLine</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TCMM_WRB_EAGER</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-82'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-82">&#182;</a>
+        </div>
+        <p>Reset timer 0.  Timer 0 will be used to time the parallel section, and will be output
+at the end of the simulation (look for <code>TIMER_0000</code>).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">ClearTimer</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-83'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-83">&#182;</a>
+        </div>
+        <p>Wake up all the other threads</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">SIM_SLEEP_OFF</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-84'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-84">&#182;</a>
+        </div>
+        <p>Start timer 0.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">StartTimer</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-85'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-85">&#182;</a>
+        </div>
+        <p>Set the zero-initialized flag to 1, signalling the other threads to start the worker thread.)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">atomic_flag_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">flag</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">atomic_flag_spin_until_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">flag</span><span class="p">);</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Parallel_Section'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Parallel_Section">&#182;</a>
+        </div>
+        <h1>Parallel Section</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-87'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-87">&#182;</a>
+        </div>
+        <p>All threads, including 0, call the worker thread.  The code in this function could be inline instead,
+but the worker thread is a useful structural idiom as it separates out the parallel section.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">GOLWorkerThread</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Cleanup'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Cleanup">&#182;</a>
+        </div>
+        <h1>Cleanup</h1>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-89'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-89">&#182;</a>
+        </div>
+        <p>Thread 0 should stop the timer and free global dynamically-allocated memory.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span><span class="p">(</span><span class="kr">thread</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">StopTimer</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">WORLD_IN</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">WORLD_OUT</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

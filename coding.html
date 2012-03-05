@@ -1,0 +1,104 @@
+<!doctype html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing Code for Rigel</title>
+  <meta name="description" content="">
+  <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="static/js/prettify.js"></script>
+
+  <!-- google analytics -->
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29490885-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+  <!-- end google analytics -->
+
+</head>
+
+<body onload="prettyPrint()">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand" href="/index.html">Rigel</a>
+        <ul class="nav">
+          <li><a href="/gettingstarted.html">Getting Started</a></li>
+          <li><a href="/compiling.html">Compiling for Rigel</a></li>
+          <li><a href="/coding.html">Writing Code for Rigel</a></li>
+          <li><a href="/machine.html">Machine Description</a></li>
+          <li><a href="/motivation.html">Motivation</a></li>
+          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div><!-- /navbar-inner -->
+  </div><!-- /navbar -->
+
+<div class="container">
+  <div class="page-header">
+    <h1>Writing Code For Rigel</h1>
+  </div>
+<h2>Example</h2>
+  <p><a href="/rtm_example.html">Here</a> is a sample program written for Rigel in C99.  It contains a parallel implementation of
+  <a href="http://en.wikipedia.org/wiki/Conway's_Game_of_Life">Conway's Game of Life</a> using the Rigel Task Model and several
+  Rigel-specific functions and idioms.</p>
+<h2>Language</h2>
+<ul>
+  <li>Our toolchain supports C89, C99, inline or standalone assembly, and the
+      <a href="http://en.wikipedia.org/wiki/Blocks_(C_language_extension)">Blocks</a> extension.
+      Clang itself also supports C++03 and much of C++11, but ports of the C++ standard and runtime
+      libraries are still in progress.</li>
+  <li>The language features supported are listed <a href="http://clang.llvm.org/compatibility.html">here</a>.</li>
+  <li>Language extensions supported are listed <a href="http://clang.llvm.org/docs/LanguageExtensions.html">here</a>.</li>
+</ul>
+
+<h2>Macros</h2>
+<p>We define a few preprocessor macros to help C-like code detect when it is being compiled for Rigel.
+Chief among these is <tt>__RIGEL__</tt>, which should be <tt>#define</tt>d to 1 when compiling for Rigel.
+To see a complete list, run:
+
+<p><code>$RIGEL_INSTALL/host/bin/clang -ccc-host-triple rigel-unknown-unknown -dM -E - &lt;/dev/null</code>.
+
+<h2>Headers</h2>
+<p>Apart from the standard <tt>libc</tt>, <tt>libm</tt>, POSIX, and <tt>libpthread</tt> headers, we provide a
+  few headers for accessing Rigel-specific constructs from C.
+
+<h3><tt>rigel.h</tt></h3>
+<p><tt>rigel.h</tt> has inline assembly implementations of cycle-accurate timers, simulation control, special Rigel instructions,
+  system topology queries, and system calls to get high-quality random numbers from the host:
+
+<ul>
+<li><tt>RigelGetThreadNum(), RigelGetCoreNum(), RigelGetClusterNum()</tt>: Get the 0-based chip-wide thread, core, or cluster identifier of the requesting thread.</li>
+<li><tt>RigelGetNumThreads(), RigelGetNumCores(), RigelGetNumClusters()</tt>: Get the total number of threads, cores, or clusters in the system being simulated.</li>
+<li><tt>RigelGetCycle()</tt>: Get the current cycle number, starting from 0 at target system boot (the beginning of the simulation)</li>
+<li><tt>SIM_SLEEP_ON(), SIM_SLEEP_OFF()</tt>: In the simulator, all threads except 0 start asleep to make initialization go faster.
+    Running cores can call <tt>SIM_SLEEP_ON()</tt> and <tt>SIM_SLEEP_OFF()</tt> to sleep or wake all other threads in the system, respectively.</li>
+<li><tt>StartTimer(int), StopTimer(int), ClearTimer(int)</tt>: The simulator keeps an array of 64k cycle-accurate timers for the target to use.  These three functions will
+start, stop, or set to 0 the timer with the given index.  These timers are used pervasively in our benchmarks to time the parallel section of the benchmark or to give more fine-grained
+timing information on interesting pieces of code.</li>
+<li><tt>RigelSRand(int, int)</tt>: The simulator also maintains a dedicated uniform RNG for the target to use when fast random number generation is desired (for example, when estimating the performance of a design with a per-core LFSR-based RNG).  This function is used to seed that RNG with 64 bits of state (2 32-bit <tt>int</tt>s).</li>
+<li><tt>RigelRandInt(), RigelRandUInt(), RigelRandFloat()</tt>: These functions are used to get a random <tt>int</tt>, <tt>unsigned int</tt>, or <tt>float</tt> between specified minimum and
+maximum values from the simulator's RNG.</li> 
+</ul>
+
+<footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
+</div>
+
+</body>
+</html>
