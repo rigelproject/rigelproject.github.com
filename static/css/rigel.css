@@ -24,7 +24,7 @@ th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
  */
 /* Common for title and header */
 .doc_title, .doc_section, .doc_subsection, h1, h2, h3 {
-  color: black; background: url("img/lines.gif");
+  color: black; background: url("/static/img/lines.gif");
   font-family: "Georgia,Palatino,Times,Roman,SanSerif"; font-weight: bold;
   border-width: 1px;
   border-style: solid none solid none;
