@@ -67,9 +67,9 @@ sudo apt-get install \
 # check out git repos
 git clone https://github.com/rigelproject/rigel.git && \
 cd rigel && \
-git clone https://github.com/rigelproject/codegen.git && \
-git clone https://github.com/rigelproject/sim.git  && \
-git clone https://github.com/rigelproject/targetcode.git
+git clone https://github.com/rigelproject/rigel-codegen.git codegen && \
+git clone https://github.com/rigelproject/rigel-sim.git sim && \
+git clone https://github.com/rigelproject/rigel-targetcode.git targetcode
 
 # run install script
 ./install.sh
@@ -114,7 +114,8 @@ This includes libraries and application code.
 
 The <tt>targetcode/lib</tt> subdirectory includes:
 <ul>
-  <li>a <a href="http://sourceware.org/newlib/"><tt>newlib</tt></a> 1.19-based standard C library</li>
+	<li>a <a href="http://sourceware.org/newlib/"><tt>newlib</tt></a> 1.19-based standard C library with a high-performance,
+	    thread-caching heap allocator based on <a href="https://github.com/ned14/nedmalloc"><tt>nedmalloc</tt></a>.</li>
   <li><tt>libpthread</tt>, a port of a subset of <a href="http://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread.h.html">
       POSIX Threads</a> thread management, thread-local storage, mutexes, and condition variables</li>
   <li><a href="http://compiler-rt.llvm.org/"><tt>compiler-rt</tt></a>, an LLVM project providing the runtime functions the compiler
