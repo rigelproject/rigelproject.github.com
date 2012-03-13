@@ -1,0 +1,162 @@
+<!doctype html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started with Rigel</title>
+  <meta name="description" content="">
+  <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link rel="stylesheet" href="static/css/screen.css"/>
+  <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="static/js/prettify.js"></script>
+
+  <!-- google analytics -->
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29490885-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+  <!-- end google analytics -->
+
+</head>
+
+<body onload="prettyPrint()">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand" href="/index.html">Rigel</a>
+        <ul class="nav">
+          <li><a href="/gettingstarted.html">Getting Started</a></li>
+          <li><a href="/source.html">Source</a></li>
+          <li><a href="/machine.html">Machine Description</a></li>
+          <li><a href="/coding.html">Writing Code for Rigel</a></li>
+          <li><a href="/compiling.html">Compiling for Rigel</a></li>
+          <li><a href="/motivation.html">Motivation</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </div><!-- /navbar-inner -->
+  </div><!-- /navbar -->
+
+<div class="container content">
+  <div class="page-header">
+    <div class="row">
+      <div class="span6"><h1 style="text-align: left;">Rigel Source Code</h1></div>
+      <div class="span4"; style="text-align:right;"><img src="static/img/rigel_logo.png" width="80px" alt="Rigel Logo"/></div>
+    </div>
+  </div>
+
+  <div class="row">
+  <div class="span10">
+<h2>Get The Source</h2>
+<p>Our code is hosted at Github:
+<ul>
+  <li><a href="https://github.com/rigelproject/rigel"/><tt>rigel</tt></a> (Start here)</li>
+  <li><a href="https://github.com/rigelproject/rigel-codegen"/><tt>rigel-codegen</tt></a></li>
+  <li><a href="https://github.com/rigelproject/rigel-targetcode"/><tt>rigel-targetcode</tt></a></li>
+  <li><a href="https://github.com/rigelproject/rigel-sim"/><tt>rigel-sim</tt></a></li>
+</ul>
+
+<p><strong>NOTE:</strong> The Rigel tools are known to work well out of the box on Ubuntu versions 8.04 and later
+  on 32- and 64-bit x86.
+  Our dependency on x86 is very minimal (a few lines of inline assembly in the simulator) and can be worked around quickly.
+  Other Linux distributions should work well too, but aren't explicitly supported yet, as we don't have test machines for them.
+  Most things work out of the box on FreeBSD 9, but a small amount of manual tweaking in the build scripts may be required.
+  We welcome patches to improve the install and usage experience on other platforms, and volunteers to help us maintain portability to
+  many platforms by testing the tools regularly.
+
+<h2>High-level Organization</h2>
+
+<p>The project's source code is broken up into repositories with mostly disjoint functionality.
+<p>The <a href="https://github.com/rigelproject/rigel"><tt>rigel</tt></a> repository acts as a container; all other repositories are stored and
+<tt>.gitignore</tt>d as subdirectories.
+<tt>rigel</tt> also contains documentation and utility scripts that cut across repositories,
+and scripts to install and update the tools contained in the other repositories.
+</p>
+
+<p>
+The <a href="https://github.com/rigelproject/rigel-codegen"><tt>codegen</tt></a> repository contains everything needed to cross-compile C and assembly code for
+Rigel on a host machine.
+Our compilation toolchain is pictured below; we use <a href="http://clang.llvm.org"><tt>clang</tt></a>
+2.8 as a C89, C99, and assembly front-end, <a href="http://llvm.org"><tt>LLVM</tt></a> 2.8 for
+middle-end optimizations, an <tt>LLVM</tt> backend to generate assembly code, and
+<a href="http://www.gnu.org/software/binutils/"><tt>GNU binutils</tt></a> 2.18 to assemble and link binaries.
+</p>
+
+<p>
+The <a href="https://github.com/rigelproject/rigel-targetcode"><tt>targetcode</tt></a> repository contains all C and assembly code intended to run on Rigel.
+This includes libraries and application code.
+</p>
+
+The <a href="https://github.com/rigelproject/rigel-targetcode/tree/master/lib"><tt>targetcode/lib</tt></a> subdirectory includes:
+<ul>
+  <li>a <a href="http://sourceware.org/newlib/"><tt>newlib</tt></a> 1.19-based standard C library with a high-performance,
+      thread-caching heap allocator based on <a href="https://github.com/ned14/nedmalloc"><tt>nedmalloc</tt></a>.</li>
+  <li><tt>libpthread</tt>, a port of a subset of <a href="http://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread.h.html">
+      POSIX Threads</a> thread management, thread-local storage, mutexes, and condition variables</li>
+  <li><a href="http://compiler-rt.llvm.org/"><tt>compiler-rt</tt></a>, an LLVM project providing the runtime functions the compiler
+      uses to support double-precision floating point, 64-bit integer arithmetic, C99 complex arithmetic, and unaligned loads and stores.
+      We have also adapted <tt>compiler-rt</tt>'s implementation of <a href="http://en.wikipedia.org/wiki/Blocks_(C_language_extension)">Blocks</a>,
+      a language extension to C, Objective-C, and C++ that implements a type of closure.</li>
+  <li><tt>libpar</tt>, a library implementing the
+      <a href="https://netfiles.uiuc.edu/jkelm2/www/papers/kelm-pact2009.pdf"<tt>RTM</tt></a>
+      task-based programming model</li>
+  <li><tt>taskmodel-x86</tt>, an incomplete <tt>pthreads</tt> port of the RTM programming model to enable faster validation of RTM-based
+      programs that what can be achieved on a simulator</li>
+  <li><tt>linker</tt>, a place to put linker scripts for laying out and aligning Rigel binaries
+  <li><tt>rigel-crt0-mp.S</tt>, the startup code run by all Rigel binaries before jumping into <tt>newlib</tt>'s pre-<tt>main()</tt> setup code.
+      The primary function of this file is to set stack pointers for all threads in the system.</li>
+</ul>
+</p>
+
+<p>
+The <a href="https://github.com/rigelproject/rigel-targetcode/tree/master/src"><tt>targetcode/src</tt></a> subdirectory includes a small set of data- and task-parallel benchmarks useful in evaluating many-core designs like Rigel,
+a larger set of test codes useful for evaluating the correctness and performance of library and compiler features, and a <tt>Makefile.common</tt>
+with environment variables and compiler toolchain flags.  The benchmarks are:
+<ul>
+  <li><tt>fft</tt>, a 2D Danielson-Lanczos-based Complex-to-Complex Fast Fourier Transform.  This benchmark comes with a test data and golden output
+    generator, <tt>fft_host</tt>, based on <a href="http://www.fftw.org/">FFTW3</a>.  The simulator's output can be checked against the golden output
+    using <tt>fpdiff</tt>, a tool for comparing binary files of single-precision floats with user-specified tolerance.</li>
+  <li><tt>march</tt>, an implementation of <a href="http://en.wikipedia.org/wiki/Marching_cubes">Marching Cubes</a> scalar field isosurface polygonization.
+  This parallel implementation is based on a <a href="http://paulbourke.net/geometry/polygonise/">serial implementation</a> by Paul Bourke and Cory Bloyd.
+    This benchmark comes with a tool to convert volume data as found in the <a href="http://graphics.stanford.edu/data/voldata/">Stanford volume data archive</a>
+    to a binary format suitable for Rigel, as well as a tool to convert RigelSim's list of output triangles into a <tt>.obj</tt> file suitable for viewing.
+    Our sample data set, a CT image of the head, comes from the UNC Volume Rendering Test Data Set by way of the Stanford volume data archive.</li>
+  <li><tt>stencil</tt>, a 3D 7-point stencil computation modeling, for example, heat diffusion over time in 3D.</li>
+</ul>
+</p>
+
+<p>
+The <tt>sim</tt> repository contains RigelSim, an execution-driven simulator for the Rigel architecture written in C++.  The repository also contains RigelSim-specific
+dependencies without wide packaging support, such as <a href="http://randomlib.sourceforge.net/html/">RandomLib</a>.
+
+<p>RigelSim has a fast functional mode that simulates at around 2 MIPS, and a structural timing mode (the default) that simulates at 100-200 KIPS.  To switch between
+  the two, set the <tt>RIGEL_CFG_NUM</tt> variable in <tt>$RIGEL_SIM/rigel-sim/user.config</tt>.
+
+<h2> License </h2>
+<p>All standalone tools in the Rigel repositories are licensed under the permissive <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of Illinois Open Source License</a>.
+<p>Our modifications to existing tools are under the same license as the tool; for instance, Rigel assembler and linker support in GNU Binutils 2.18 is licensed under
+<a href="http://www.opensource.org/licenses/gpl-3.0.html">GPLv3</a>.
+<p>RigelSim can optionally link against GPLv3 tools &mdash; like GNU Binutils for instruction disassembly &mdash; these dependencies can be enabled with the <tt>--enable-gplv3</tt> flag to
+RigelSim's configure script.  Without this flag, the resulting combined work is licensed under the University of Illinois Open Source License.
+With this flag, the resulting combined work must be licensed under GPLv3.
+<p>For more details, see the <a href="https://github.com/rigelproject/rigel/blob/master/LICENSE.TXT"><tt>LICENSE.TXT</tt></a> file in the main Rigel repository.
+
+<footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
+</div>
+
+</body>
+</html>
