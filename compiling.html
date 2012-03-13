@@ -108,7 +108,7 @@ LLVM's <a href="http://llvm.org/docs/LangRef.html">SSA-based IR</a>.</li>
 <h3>Example</h3>
 <p><tt>$RIGEL_TARGETCODE/src/Makefile.common</tt> has a set of flags that mostly automate the process of compiling C code for Rigel.
 <tt>$RIGEL_TARGETCODE/src/benchmarks</tt> and <tt>$RIGEL_TARGETCODE/src/testing</tt> have additional <tt>Makefile</tt> scaffolding that
-minimize the amount of boilerplate required for individual benchmarks or test codes.  For example, here we compile and run the
+minimizes the amount of boilerplate required for individual benchmarks or test codes.  For example, here we compile and run the
 <tt>complex</tt> test code.
 
 <pre class="prettyprint lang-c">
@@ -128,9 +128,9 @@ mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ cat complex.c
 #include &lt;complex.h&gt;
 #include "rigel.h"
 
-int main(){
-        if(RigelGetThreadNum() == 0) {
-                SIM_SLEEP_OFF();
+int main(int argc, char *argv[]){
+  if(RigelGetThreadNum() == 0) {
+    SIM_SLEEP_OFF();
     double complex z = -4.4 + 3.3 * I;
     double radius = cabs(z);
     double argument = carg(z);
@@ -140,7 +140,7 @@ int main(){
 
     printf("cartesian(x,y):(%4.1f,%4.1f)\n",x,y);
     printf("polar(r,theta):(%4.1f,%4.1f)\n",radius,argument);
-        }
+  }
   return 0;
 }
 mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ make
@@ -152,7 +152,6 @@ mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ make
 rm complex.ro
 mrj10@mjlap:~/rigel/targetcode/src/testing/complex$ $RIGEL_INSTALL/host/bin/rigelsim complex.tasks
 RigelSim Compiled by mrj10 on Feb 26 2012 at 15:10:55 from Git commit:
-commit bd236f7fb1544758e436ba5c810b644184e4aa25
 ...
 ...
 cartesian(x,y):(-4.4, 3.3)
