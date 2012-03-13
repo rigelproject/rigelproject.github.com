@@ -11,6 +11,7 @@
   <title>Compiling for Rigel</title>
   <meta name="description" content="">
   <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link rel="stylesheet" href="static/css/screen.css"/>
   <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
   <script type="text/javascript" src="static/js/prettify.js"></script>
 
@@ -43,17 +44,23 @@
           <li><a href="/coding.html">Writing Code for Rigel</a></li>
           <li><a href="/machine.html">Machine Description</a></li>
           <li><a href="/motivation.html">Motivation</a></li>
-          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="https://github.com/rigelproject/rigel">Source</a></li>
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
     </div><!-- /navbar-inner -->
   </div><!-- /navbar -->
 
-<div class="container">
+<div class="container content">
   <div class="page-header">
-    <h1>Compiling Code For Rigel</h1>
+    <div class="row">
+      <div class="span6"><h1 style="text-align: left;">Compiling Code for Rigel</h1></div>
+      <div class="span4"; style="text-align:right;"><img src="static/img/rigel_logo.png" width="80px" alt="Rigel Logo"/></div>
+    </div>
   </div>
+
+  <div class="row">
+  <div class="span10">
 
 <h2>Glossary</h2>
 <ul>
@@ -73,20 +80,22 @@
 <!--</object>-->
 </p>
 
-<p>The <tt>clang</tt> binary is used as a <em>compiler driver</em>; that is, it automatically invokes a sequence of other
-tools for parsing, compiling, optimizing, assembling, and linking.
-<p><tt>clang</tt> is used as a cross-compiler by passing the argument <tt>-ccc-host-triple rigel-unknown-unknown</tt>.
-<p>For the <tt>rigel-unknown-unknown</tt> target, <tt>clang</tt> will call out to GNU <tt>as</tt> and GNU <tt>ld</tt>
-(with binaries named <tt>rigelas</tt> and <tt>rigelld</tt> to distinguish them from the system versions) for assembly and linking.
+<ul>
+<li>The <tt>clang</tt> binary is used as a <em>compiler driver</em>; that is, it automatically invokes a sequence of other
+tools for parsing, compiling, optimizing, assembling, and linking.</li>
+<li><tt>clang</tt> is used as a cross-compiler by passing the argument <tt>-ccc-host-triple rigel-unknown-unknown</tt>.</li>
+<li>For the <tt>rigel-unknown-unknown</tt> target, <tt>clang</tt> will call out to GNU <tt>as</tt> and GNU <tt>ld</tt>
+(with binaries named <tt>rigelas</tt> and <tt>rigelld</tt> to distinguish them from the system versions) for assembly and linking.</li>
 
-<p><tt>clang</tt> itself performs source preprocessing, parsing, and semantic analysis, and lowers the generated AST to
-LLVM's <a href="http://llvm.org/docs/LangRef.html">SSA-based IR</a>.
-<p>You can tell <tt>clang</tt> to only preprocess a file by passing <tt>-E</tt>, or only preprocess, parse, and analyze by passing <tt>-fsyntax-only</tt>.
-<p>Like other compiler drivers, <tt>clang</tt> can compile to an object file with <tt>-c</tt>, or emit assembly code with <tt>-S</tt>.
-<p><tt>clang</tt> can also emit bitcode or textual versions of the LLVM IR by passing <tt>-c -emit-llvm</tt> or <tt>-S -emit-llvm</tt> respectively. 
-<p>To emit completely unoptimized IR, use something like <tt>clang -S -emit-llvm -mllvm -disable-llvm-optzns foo.c -o foo.ll</tt>.
-<p>For other flags, see the <a href="http://clang.llvm.org/docs/UsersManual.html">User Manual</a>, keeping in mind that we are using
-  version 2.8 and may not support some features listed.
+<li><tt>clang</tt> itself performs source preprocessing, parsing, and semantic analysis, and lowers the generated AST to
+LLVM's <a href="http://llvm.org/docs/LangRef.html">SSA-based IR</a>.</li>
+<li>You can tell <tt>clang</tt> to only preprocess a file by passing <tt>-E</tt>, or only preprocess, parse, and analyze by passing <tt>-fsyntax-only</tt>.</li>
+<li>Like other compiler drivers, <tt>clang</tt> can compile to an object file with <tt>-c</tt>, or emit assembly code with <tt>-S</tt>.</li>
+<li><tt>clang</tt> can also emit bitcode or textual versions of the LLVM IR by passing <tt>-c -emit-llvm</tt> or <tt>-S -emit-llvm</tt> respectively. </li>
+<li>To emit completely unoptimized IR, use something like <tt>clang -S -emit-llvm -mllvm -disable-llvm-optzns foo.c -o foo.ll</tt>.</li>
+<li>For other flags, see the <a href="http://clang.llvm.org/docs/UsersManual.html">User Manual</a>, keeping in mind that we are using
+  version 2.8 and may not support some features listed.</li>
+</ul>
 
 <h3>File Extensions</h3>
 <ul>

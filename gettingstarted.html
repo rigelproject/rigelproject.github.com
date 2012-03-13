@@ -11,6 +11,7 @@
   <title>Getting Started with Rigel</title>
   <meta name="description" content="">
   <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link rel="stylesheet" href="static/css/screen.css"/>
   <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
   <script type="text/javascript" src="static/js/prettify.js"></script>
 
@@ -43,17 +44,23 @@
           <li><a href="/coding.html">Writing Code for Rigel</a></li>
           <li><a href="/machine.html">Machine Description</a></li>
           <li><a href="/motivation.html">Motivation</a></li>
-          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="https://github.com/rigelproject/rigel">Source</a></li>
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
     </div><!-- /navbar-inner -->
   </div><!-- /navbar -->
 
-<div class="container">
+<div class="container content">
   <div class="page-header">
-    <h1>Getting Started</h1>
+    <div class="row">
+      <div class="span6"><h1 style="text-align: left;">Getting Started with Rigel</h1></div>
+      <div class="span4"; style="text-align:right;"><img src="static/img/rigel_logo.png" width="80px" alt="Rigel Logo"/></div>
+    </div>
   </div>
+
+  <div class="row">
+  <div class="span10">
 
 <h2>Quick Start</h2>
 <pre class="prettyprint"><code class="language-bash"># install dependencies
@@ -62,7 +69,8 @@ sudo apt-get install pkg-config && \
 sudo apt-get install \
  build-essential flex bison libelf-dev \
  automake autoconf autotools-dev m4 libtool \
- zlib1g-dev doxygen texinfo protobuf-compiler libprotobuf-dev
+ zlib1g-dev doxygen texinfo protobuf-compiler \
+ libprotobuf-dev libfftw3-dev
 
 # check out git repos
 git clone https://github.com/rigelproject/rigel.git && \
@@ -87,19 +95,41 @@ make test
 # run stencil benchmark on 2 8-core clusters
 cd $RIGEL_TARGETCODE/src/benchmarks/stencil
 echo "4 inputs/34.in 2 1 0 1 1 1 1" | $RIGEL_INSTALL/host/bin/rigelsim -clusters 2 stencil.tasks
+
+# generate 1024x1024 random matrix
+cd $RIGEL_TARGETCODE/src/benchmarks/fft
+make fft_host
+make fpdiff
+./fft_host 1024 1024 1024x1024
+cp 1024x1024.b.out 1024x1024.b.out.gold
+
+# run 1024x1024 complex FFT on 1024 cores
+echo "4 1024 1024 16 16 1024x1024.b" | \
+$RIGEL_INSTALL/host/bin/rigelsim -clusters 16 -tiles 8 --sleepy-cores fft.tasks
+
+# verify FFT result
+./fpdiff 1024 1024 1024x1024.b.out 1024x1024.b.out.gold
 </code></pre>
+
+<p><strong>NOTE:</strong> The current release of the Rigel tools are known to work well out of the box on Ubuntu versions 8.04 and later
+  on 32- and 64-bit x86.
+  Our dependency on x86 is very minimal (a few lines of inline assembly in the simulator) and can be worked around quickly.
+  Other Linux distributions should work well too, but aren't explicitly supported yet, as we don't have test machines for them.
+  Most things work out of the box on FreeBSD 9, but a small amount of manual tweaking in the build scripts may be required.
+  We welcome patches to improve the install and usage experience on other platforms, and volunteers to help us maintain portability to
+  many platforms by testing the tools regularly.
 
 <h2>What is all this?</h2>
 <p>
 The project's source code is broken up into repositories with mostly disjoint functionality.
-The <tt>rigel</tt> repository acts as a container; all other repositories are stored and
+<p>The <a href="https://github.com/rigelproject/rigel"><tt>rigel</tt></a> repository acts as a container; all other repositories are stored and
 <tt>.gitignore</tt>d as subdirectories.
 <tt>rigel</tt> also contains documentation and utility scripts that cut across repositories,
 and scripts to install and update the tools contained in the other repositories.
 </p>
 
 <p>
-The <tt>codegen</tt> repository contains everything needed to cross-compile C and assembly code for
+The <a href="https://github.com/rigelproject/rigel-codegen"><tt>codegen</tt></a> repository contains everything needed to cross-compile C and assembly code for
 Rigel on a host machine.
 Our compilation toolchain is pictured below; we use <a href="http://clang.llvm.org"><tt>clang</tt></a>
 2.8 as a C89, C99, and assembly front-end, <a href="http://llvm.org"><tt>LLVM</tt></a> 2.8 for
@@ -108,11 +138,11 @@ middle-end optimizations, an <tt>LLVM</tt> backend to generate assembly code, an
 </p>
 
 <p>
-The <tt>targetcode</tt> repository contains all C and assembly code intended to run on Rigel.
+The <a href="https://github.com/rigelproject/rigel-targetcode"><tt>targetcode</tt></a> repository contains all C and assembly code intended to run on Rigel.
 This includes libraries and application code.
 </p>
 
-The <tt>targetcode/lib</tt> subdirectory includes:
+The <a href="https://github.com/rigelproject/rigel-targetcode/tree/master/lib"><tt>targetcode/lib</tt></a> subdirectory includes:
 <ul>
 	<li>a <a href="http://sourceware.org/newlib/"><tt>newlib</tt></a> 1.19-based standard C library with a high-performance,
 	    thread-caching heap allocator based on <a href="https://github.com/ned14/nedmalloc"><tt>nedmalloc</tt></a>.</li>
@@ -134,7 +164,7 @@ The <tt>targetcode/lib</tt> subdirectory includes:
 </p>
 
 <p>
-The <tt>targetcode/src</tt> subdirectory includes a small set of data- and task-parallel benchmarks useful in evaluating many-core designs like Rigel,
+The <a href="https://github.com/rigelproject/rigel-targetcode/tree/master/src"><tt>targetcode/src</tt></a> subdirectory includes a small set of data- and task-parallel benchmarks useful in evaluating many-core designs like Rigel,
 a larger set of test codes useful for evaluating the correctness and performance of library and compiler features, and a <tt>Makefile.common</tt>
 with environment variables and compiler toolchain flags.  The benchmarks are:
 <ul>
@@ -153,6 +183,18 @@ with environment variables and compiler toolchain flags.  The benchmarks are:
 <p>
 The <tt>sim</tt> repository contains RigelSim, an execution-driven simulator for the Rigel architecture written in C++.  The repository also contains RigelSim-specific
 dependencies without wide packaging support, such as <a href="http://randomlib.sourceforge.net/html/">RandomLib</a>.
+
+<p>RigelSim has a fast functional mode that simulates at around 2 MIPS, and a structural timing mode (the default) that simulates at 100-200 KIPS.  To switch between
+  the two, set the <tt>RIGEL_CFG_NUM</tt> variable in <tt>$RIGEL_SIM/rigel-sim/user.config</tt>.
+
+<h2> License </h2>
+<p>All standalone tools in the Rigel repositories are licensed under the permissive <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of Illinois Open Source License</a>.
+<p>Our modifications to existing tools are under the same license as the tool; for instance, Rigel assembler and linker support in GNU Binutils 2.18 is licensed under
+<a href="http://www.opensource.org/licenses/gpl-3.0.html">GPLv3</a>.
+<p>RigelSim can optionally link against GPLv3 tools &mdash; like GNU Binutils for instruction disassembly &mdash; these dependencies can be enabled with the <tt>--enable-gplv3</tt> flag to
+RigelSim's configure script.  Without this flag, the resulting combined work is licensed under the University of Illinois Open Source License.
+With this flag, the resulting combined work must be licensed under GPLv3.
+<p>For more details, see the <a href="https://github.com/rigelproject/rigel/blob/master/LICENSE.TXT"><tt>LICENSE.TXT</tt></a> file in the main Rigel repository.
 
 <footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
 </div>

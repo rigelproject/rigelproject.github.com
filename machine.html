@@ -11,8 +11,7 @@
   <title>Rigel Machine Description</title>
   <meta name="description" content="">
   <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
-  <link href="static/css/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="static/js/prettify.js"></script>
+  <link rel="stylesheet" href="static/css/screen.css"/>
 
   <!-- google analytics -->
   <script type="text/javascript">
@@ -32,7 +31,7 @@
 
 </head>
 
-<body onload="prettyPrint()">
+<body>
   <div class="navbar">
     <div class="navbar-inner">
       <div class="container">
@@ -43,30 +42,45 @@
           <li><a href="/coding.html">Writing Code for Rigel</a></li>
           <li><a href="/machine.html">Machine Description</a></li>
           <li><a href="/motivation.html">Motivation</a></li>
-          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="https://github.com/rigelproject/rigel">Source</a></li>
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
     </div><!-- /navbar-inner -->
   </div><!-- /navbar -->
 
-<div class="container">
+<div class="container content">
   <div class="page-header">
-    <h1>Rigel Machine Description</h1>
+    <div class="row">
+      <div class="span6"><h1 style="text-align: left;">Rigel Machine Description</h1></div>
+      <div class="span4"; style="text-align:right;"><img src="static/img/rigel_logo.png" width="80px" alt="Rigel Logo"/></div>
+    </div>
   </div>
 
-<h2>System Architecture</h2>
-<h2>Core Architecture</h2>
-<h2>Instruction Set</h2>
-  <h3>Base ISA</h3>
-  <h3>Parallel Extensions</h3>
-<h2>Registers</h2>
-<h3>Special Purpose Registers</h3>
-<h2>ABI</h2>
-<h3>Shared Libraries</h3>
-<h3>Relocations</h3>
-<h2>Assembly Syntax</h2>
+  <div class="row">
+  <div class="span10">
 
+<p>A high-level diagram of the Rigel architecture is shown below.<br/><br/>
+
+  <div style="text-align: center;"><img align="middle" width="50%" src="static/img/rigel_arch_color.png" alt="Rigel Architecture Diagram"/></div>
+
+  <p><ul>
+     <li>The baseline Rigel core is 2-wide, in-order, and has a 32-entry unified register file and a single-precision FPU.</li>
+     <li>Each core has its own small L1I and L1D caches, and cores are organized into <em>clusters</em> that share a unified L2 cache.</li>
+     <li>The L1 and L2 caches within each cluster are coherent with one another, but are not coherent with caches in other clusters.</li>
+     <li>All clusters on the chip share a unified L3 cache, also called the <em>global cache</em>.</li>
+     <li>Clusters are grouped into <em>tiles</em>, and each tile has a 4-ary tree interconnect aggregating it into a single global network port.</li>
+     <li>Tiles are connected to global cache banks via a multi-stage crossbar.</li>
+     <li>The L3 cache is backed by high-performance GDDR5 memory controllers.</li>
+     </ul>
+  <p>Cores, network, and caches ran at 1.2GHz by default; the frequency can be changed in <tt>$RIGEL_SIM/rigel-sim/include/sim.h</tt>.
+  <p>For more high-level architecture, memory model, and programming model details, see the publications <a href="https://rigel.crhc.illinois.edu">here</a>.
+  <p>Rigel implements a cycle-accurate GDDR5 DRAM controller with several scheduling algorithms from the literature, including FR-FCFS and FCFS.
+      The DRAM operates at 6Gbps per pin by default; the frequency and detailed timing constraints can be changed in <tt>$RIGEL_SIM/rigel-sim/include/dram.h</tt>.
+  <p>A high-level diagram of Rigel's DRAM architecture is shown below.<br/><br/>
+
+  <div style="text-align: center;"><img align="middle" width="90%" src="static/img/rigel_memory_arch.png" alt="Rigel Memory System"/></div>
+  <br/>
 <footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
 </div>
 

@@ -11,6 +11,7 @@
   <title>The Rigel Project</title>
   <meta name="description" content="">
   <link rel="stylesheet" href="static/css/bootstrap.min.css?v=1"/>
+  <link rel="stylesheet" href="static/css/screen.css"/>
 
   <!-- google analytics -->
   <script type="text/javascript">
@@ -34,26 +35,56 @@
   <div class="navbar">
     <div class="navbar-inner">
       <div class="container">
-        <a class="brand" href="#">Rigel</a>
+        <a class="brand" href="/index.html">Rigel</a>
         <ul class="nav">
           <li><a href="/gettingstarted.html">Getting Started</a></li>
           <li><a href="/compiling.html">Compiling for Rigel</a></li>
           <li><a href="/coding.html">Writing Code for Rigel</a></li>
           <li><a href="/machine.html">Machine Description</a></li>
           <li><a href="/motivation.html">Motivation</a></li>
-          <li><a href="/todo.html">TODO</a></li>
+          <li><a href="https://github.com/rigelproject/rigel">Source</a></li>
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
     </div><!-- /navbar-inner -->
   </div><!-- /navbar -->
 
-<div class="container">
+<div class="container content">
   <div class="page-header">
-    <h1>The Rigel Project</h1>
+    <div class="row">
+      <div class="span6"><h1 style="text-align: left;">The Rigel Project</h1></div>
+      <div class="span4"; style="text-align:right;"><img src="static/img/rigel_logo.png" width="80px" alt="Rigel Logo"/></div>
+    </div>
   </div>
 
-  <img src="static/img/rigel_logo.png" alt="Rigel Logo"/>
+  <div class="row">
+  <div class="span10">
+
+  <p>Rigel is an architecture for compute accelerators with hundreds to thousands of cores.
+  The high-level goal of Rigel is to combine the programmability of general-purpose processors with the
+  performance and efficiency of graphics processing units (GPUs) and other existing accelerators.
+
+  <div style="text-align: center;"><img align="middle" width="50%" src="static/img/rigel_arch_color.png" alt="Rigel Architecture Diagram"/></div>
+  <br/>
+  <p>The goal of this project is to form an open, integrated ecosystem of tools for in-depth exploration of parallel architectures and parallel software.
+  <p>The Rigel toolset currently includes an execution driven simulator written in C++, C99/assembly cross-compiler toolchain, system libraries,
+    a parallel task queue library, and parallel benchmarks.
+  <p>Use the <a href="/gettingstarted.html">Quick Start Guide</a> to install our tools and be running 1000-core simulations within the hour.
+  <p>See the <a href="https://rigel.crhc.uiuc.edu">University of Illinois project page</a> for academic publications describing Rigel.
+
+  <h2>Get Involved</h2>
+  <p>Our code is hosted on <a href="https://github.com/rigelproject/rigel">github</a>.
+  <p>We are actively seeking contributions for all parts of the toolset.
+  <p>We intend to cultivate a vibrant community around these tools, and will work with you to upstream your enhancements.
+  <p>We have many existing project ideas for people with a wide range of expertise and interests.  We will post a list of ideas in the near future.
+  <p>Our contributor policy and coding standards are a work-in-progress; post to the <a href="https://groups.google.com/group/rigelproject">mailing list</a> with suggestions.
+  <p>Send us a pull request, file a bug, or see the <a href="/contact.html">Contact page</a> to get involved!
+
+  </div>
+  </div>
+
+
+
 
   <footer><p>&copy; Copyright 2012 by <a href="https://rigel.crhc.illinois.edu">The Rigel team</a>.</p></footer>
 </div>
