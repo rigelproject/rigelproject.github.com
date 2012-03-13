@@ -81,6 +81,10 @@ git clone https://github.com/rigelproject/rigel-targetcode.git targetcode
 # run install script
 ./install.sh
 
+# everything is built and installed now.
+# all binaries, headers, and libraries that run on the host are in $RIGEL_INSTALL/host/{bin,include,lib}
+# all binaries, headers, and libraries that run on Rigel itself are in $RIGEL_INSTALL/target/{bin,include,lib}
+
 # set environment variables
 # the install script should take care of these during the install, but for
 # future shells you will want to source these or add to ~/.bashrc or similar
@@ -92,7 +96,7 @@ cd $RIGEL_SIM/rigel-sim/test
 make test
 
 # run stencil benchmark on 2 8-core clusters
-# all host binaries, including the simulator, are installed to $RIGEL_INSTALL/host/bin
+
 cd $RIGEL_TARGETCODE/src/benchmarks/stencil
 echo "4 inputs/34.in 2 1 0 1 1 1 1" | $RIGEL_INSTALL/host/bin/rigelsim -clusters 2 stencil.tasks
 
